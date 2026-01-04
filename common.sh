@@ -244,8 +244,6 @@ fi
 gitsvn https://github.com/sbwml/packages_lang_golang ${HOME_PATH}/feeds/packages/lang/golang
 gitsvn https://github.com/sbwml/feeds_packages_lang_node-prebuilt ${HOME_PATH}/feeds/packages/lang/node
 
-# tproxy补丁
-bash "$LINSHI_COMMON/Share/tproxy/nft_tproxy.sh"
 
 if [[ ! -d "${HOME_PATH}/feeds/packages/lang/rust" ]]; then
   gitsvn https://github.com/openwrt/packages/tree/openwrt-24.10/lang/rust ${HOME_PATH}/feeds/packages/lang/rust
