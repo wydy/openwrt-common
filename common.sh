@@ -270,12 +270,6 @@ else
   fi
 fi
 
-# N1类型固件修改
-if [[ -f "${HOME_PATH}/target/linux/armsr/Makefile" ]]; then
-  sed -i "s?FEATURES+=.*?FEATURES+=targz?g" ${HOME_PATH}/target/linux/armsr/Makefile
-elif [[ -f "${HOME_PATH}/target/linux/armvirt/Makefile" ]]; then
-  sed -i "s?FEATURES+=.*?FEATURES+=targz?g" ${HOME_PATH}/target/linux/armvirt/Makefile
-fi
 
 # 给固件保留配置更新固件的保留项目
 cat >> "${KEEPD_PATH}" <<-EOF
@@ -283,35 +277,6 @@ cat >> "${KEEPD_PATH}" <<-EOF
 /www/luci-static/argon/background
 /etc/smartdns/custom.conf
 EOF
-}
-
-
-function Diy_COOLSNOWWOLF() {
-cd ${HOME_PATH}
-rm -rf ${HOME_PATH}/package/wwan/driver
-}
-
-
-function Diy_LIENOL() {
-cd ${HOME_PATH}
-rm -rf $HOME_PATH/feeds/packages/net/miniupnpd
-gitsvn https://github.com/openwrt/packages/tree/master/net/tailscale ${HOME_PATH}/feeds/packages/net/tailscale
-if [[ -d "${HOME_PATH}/feeds/other/lean" ]]; then
-  rm -rf ${HOME_PATH}/feeds/other/lean/mt
-  rm -rf ${HOME_PATH}/feeds/other/lean/luci-app-vlmcsd
-  rm -rf ${HOME_PATH}/feeds/other/lean/vlmcsd
-fi
-if [[ "${REPO_BRANCH}" == *"24.10"* ]]; then
-  gitsvn https://github.com/coolsnowwolf/lede/tree/master/package/libs/mbedtls ${HOME_PATH}/package/libs/mbedtls
-  gitsvn https://github.com/coolsnowwolf/lede/tree/master/package/libs/ustream-ssl ${HOME_PATH}/package/libs/ustream-ssl
-  gitsvn https://github.com/coolsnowwolf/lede/tree/master/package/libs/uclient ${HOME_PATH}/package/libs/uclient
-  rm -fr ${HOME_PATH}/feeds/packages/utils/owut
-  gitsvn https://github.com/openwrt/packages/tree/master/lang/rust ${HOME_PATH}/feeds/packages/lang/rust
-fi
-if [[ "${REPO_BRANCH}" == *"21.02"* ]]; then
-  gitsvn https://github.com/coolsnowwolf/packages/tree/152022403f0ab2a85063ae1cd9687bd5240fe9b7/net/dnsproxy ${HOME_PATH}/feeds/packages/net/dnsproxy
-  gitsvn https://github.com/coolsnowwolf/lede/tree/326599e3d08d7fe1dc084e1c87581cdf5a8e41a6/package/libs/libjson-c ${HOME_PATH}/package/libs/libjson-c
-fi
 }
 
 
@@ -329,33 +294,16 @@ if [[ "${REPO_BRANCH}" == *"21.02"* ]] || [[ "${REPO_BRANCH}" == *"18.06"* ]] ||
 fi
 }
 
-
-function Diy_XWRT() {
-cd ${HOME_PATH}
-}
-
-
 function Diy_OFFICIAL() {
 cd ${HOME_PATH}
 if [[ "${REPO_BRANCH}" == "openwrt-19.07" ]]; then
   gitsvn https://github.com/openwrt/openwrt/tree/openwrt-22.03/package/utils/bcm27xx-userland ${HOME_PATH}/package/utils/bcm27xx-userland
   rm -fr ${HOME_PATH}/feeds/danshui/luci-app-kodexplorer
 fi
-if [[ "${REPO_BRANCH}" =~ (main|master|openwrt-24.10) ]]; then
-  gitsvn https://github.com/wydy/openwrt-common/blob/main/Share/luci-app-nginx-pingos/Makefile ${HOME_PATH}/feeds/danshui/luci-app-nginx-pingos/Makefile
-fi
 if [[ "${REPO_BRANCH}" == *"23.05"* ]]; then
   gitsvn https://github.com/coolsnowwolf/packages/tree/152022403f0ab2a85063ae1cd9687bd5240fe9b7/net/dnsproxy ${HOME_PATH}/feeds/packages/net/dnsproxy
   gitsvn https://github.com/coolsnowwolf/lede/tree/326599e3d08d7fe1dc084e1c87581cdf5a8e41a6/package/libs/libjson-c ${HOME_PATH}/package/libs/libjson-c
 fi
-if [[ "${REPO_BRANCH}" =~ (main|master) ]]; then
-  gitsvn https://github.com/openwrt/packages/tree/openwrt-24.10/lang/rust ${HOME_PATH}/feeds/packages/lang/rust
-fi
-}
-
-
-function Diy_MT798X() {
-cd ${HOME_PATH}
 }
 
 
