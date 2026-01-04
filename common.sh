@@ -276,12 +276,6 @@ EOF
 
 function Diy_IMMORTALWRT() {
 cd ${HOME_PATH}
-if [[ "${REPO_BRANCH}" =~ (openwrt-18.06|openwrt-18.06-k5.4) ]]; then
-  gitsvn https://github.com/openwrt/routing/tree/openwrt-21.02/bmx6 ${HOME_PATH}/feeds/routing/bmx6
-  rm -rf ${HOME_PATH}/feeds/packages/net/shadowsocksr-libev
-  rm -rf ${HOME_PATH}/feeds/danshui/luci-app-nikki
-  rm -rf ${HOME_PATH}/feeds/danshui/luci-app-homeproxy
-fi
 if [[ "${REPO_BRANCH}" == *"21.02"* ]] || [[ "${REPO_BRANCH}" == *"18.06"* ]] || [[ "${REPO_BRANCH}" == *"23.05"* ]]; then
   gitsvn https://github.com/coolsnowwolf/packages/tree/152022403f0ab2a85063ae1cd9687bd5240fe9b7/net/dnsproxy ${HOME_PATH}/feeds/packages/net/dnsproxy
   gitsvn https://github.com/coolsnowwolf/lede/tree/326599e3d08d7fe1dc084e1c87581cdf5a8e41a6/package/libs/libjson-c ${HOME_PATH}/package/libs/libjson-c
