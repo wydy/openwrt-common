@@ -328,11 +328,11 @@ fi
 ./scripts/feeds update -a &>/dev/null
 ./scripts/feeds install -a
 
-# 执行feeds修改脚本
-source "${DIY_SOURCE_SH}"
-
 # 使用自定义配置文件
 [[ -f "$MYCONFIG_FILE" ]] && cp -Rf $MYCONFIG_FILE .config
+
+# 执行feeds修改脚本
+source "${DIY_SOURCE_SH}"
 }
 
 
