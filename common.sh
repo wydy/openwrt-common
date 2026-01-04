@@ -138,14 +138,8 @@ echo "src-git dstheme https://github.com/wydy/openwrt-package.git;$THEME_BRANCH"
 # 增加中文语言包
 if [[ -z "$(find "$HOME_PATH/package" -type d -name "default-settings" -print)" ]] && [[ "${THEME_BRANCH}" == "Theme2" ]]; then
   gitsvn https://github.com/wydy/openwrt-common/tree/main/Share/default-settings "${HOME_PATH}/package/default-settings"
-  grep -qw "libustream-wolfssl" "${HOME_PATH}/include/target.mk" && sed -i 's?\<libustream-wolfssl\>?libustream-openssl?g' "${HOME_PATH}/include/target.mk"
-  ! grep -qw "dnsmasq-full" "${HOME_PATH}/include/target.mk" && sed -i 's?\<dnsmasq\>?dnsmasq-full?g' "${HOME_PATH}/include/target.mk"
-  ! grep -qw "default-settings" "${HOME_PATH}/include/target.mk" && sed -i 's?DEFAULT_PACKAGES:=?DEFAULT_PACKAGES:=default-settings?g' "${HOME_PATH}/include/target.mk"
 elif [[ -z "$(find "$HOME_PATH/package" -type d -name "default-settings" -print)" ]] && [[ "${THEME_BRANCH}" == "Theme1" ]]; then
   gitsvn https://github.com/wydy/openwrt-common/tree/main/Share/default-setting "${HOME_PATH}/package/default-settings"
-  grep -qw "libustream-wolfssl" "${HOME_PATH}/include/target.mk" && sed -i 's?\<libustream-wolfssl\>?libustream-openssl?g' "${HOME_PATH}/include/target.mk"
-  ! grep -qw "dnsmasq-full" "${HOME_PATH}/include/target.mk" && sed -i 's?\<dnsmasq\>?dnsmasq-full?g' "${HOME_PATH}/include/target.mk"
-  ! grep -qw "default-settings" "${HOME_PATH}/include/target.mk" && sed -i 's?DEFAULT_PACKAGES:=?DEFAULT_PACKAGES:=default-settings?g' "${HOME_PATH}/include/target.mk"
 fi
 
 # zzz-default-settings文件
@@ -386,10 +380,6 @@ if [[ ! -f "${HOME_PATH}/staging_dir/host/bin/upx" ]]; then
   cp -Rf /usr/bin/upx-ucl ${HOME_PATH}/staging_dir/host/bin/upx-ucl
 fi
 
-# 正在执行插件语言修改
-if [[ ! -d "${HOME_PATH}/feeds/luci/modules/luci-mod-system" ]]; then
-  cd "${HOME_PATH}" && bash "$LINSHI_COMMON/language/zh-cn.sh"
-fi
 # files文件夹删除LICENSE,README
 [[ -d "${HOME_PATH}/files" ]] && sudo chmod +x ${HOME_PATH}/files
 rm -rf ${HOME_PATH}/files/{LICENSE,README}
