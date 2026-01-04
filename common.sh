@@ -298,7 +298,7 @@ fi
 function Diy_partsh() {
 TIME y "正在执行：自定义文件"
 cd ${HOME_PATH}
-# 运行自定义文件
+# 运行自定义文件，然后更新feeds
 ${DIY_PT1_SH}
 ./scripts/feeds update -a &>/dev/null
 }
@@ -325,7 +325,7 @@ if [[ ! "${Default_theme}" == "0" ]] && [[ -n "${Default_theme}" ]]; then
 fi
 
 # 更新和安装feeds
-./scripts/feeds install -a &>/dev/null
+./scripts/feeds update -a &>/dev/null
 ./scripts/feeds install -a
 
 # 使用自定义配置文件
