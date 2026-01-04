@@ -231,9 +231,11 @@ Diy_four() {
     cp -Rf "${COMPILE_PATH}" "${LINSHI_COMMON}/${FOLDER_NAME}"
     export DIY_PT1_SH="${LINSHI_COMMON}/${FOLDER_NAME}/diy-part.sh"
     export DIY_PT2_SH="${LINSHI_COMMON}/${FOLDER_NAME}/diy2-part.sh"
+    export DIY_SOURCE_SH="${LINSHI_COMMON}/${FOLDER_NAME}/diy-source.sh"
 
     echo "DIY_PT1_SH=${DIY_PT1_SH}" >> "${GITHUB_ENV}"
     echo "DIY_PT2_SH=${DIY_PT2_SH}" >> "${GITHUB_ENV}"
+    echo "DIY_SOURCE_SH=${DIY_SOURCE_SH}" >> "${GITHUB_ENV}"
     echo "COMMON_SH=${COMMON_SH}" >> "${GITHUB_ENV}"
     echo "UPGRADE_SH=${UPGRADE_SH}" >> "${GITHUB_ENV}"
     echo "CONFIG_TXT=${CONFIG_TXT}" >> "${GITHUB_ENV}"
