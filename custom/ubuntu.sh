@@ -23,7 +23,7 @@ apt-get install -y ack antlr3 asciidoc autoconf automake autopoint binutils biso
 
 cd $TMP_DIR
 # 安装golang
-GO_VERSION="1.24.2"
+GO_VERSION="1.25.5"
 wget -q https://go.dev/dl/go${GO_VERSION}.linux-amd64.tar.gz -O /tmp/go${GO_VERSION}.linux-amd64.tar.gz
 sudo tar -C /usr/local -xzf /tmp/go${GO_VERSION}.linux-amd64.tar.gz
 echo 'export PATH=$PATH:/usr/local/go/bin' | sudo tee -a /etc/profile.d/go.sh
@@ -39,7 +39,7 @@ apt-get update -y && apt-get install -y yarn gh
 
 cd $TMP_DIR
 # 安装UPX
-UPX_VERSION="5.0.0"
+UPX_VERSION="5.0.2"
 curl -fLO "https://github.com/upx/upx/releases/download/v${UPX_VERSION}/upx-$UPX_VERSION-amd64_linux.tar.xz"
 tar -Jxf "upx-$UPX_VERSION-amd64_linux.tar.xz"
 rm -rf "/usr/bin/upx" "/usr/bin/upx-ucl"
