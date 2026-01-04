@@ -325,7 +325,6 @@ if [[ ! "${Default_theme}" == "0" ]] && [[ -n "${Default_theme}" ]]; then
 fi
 
 # 更新和安装feeds
-./scripts/feeds update -a &>/dev/null
 ./scripts/feeds install -a
 
 # 使用自定义配置文件
