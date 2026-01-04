@@ -244,11 +244,6 @@ fi
 gitsvn https://github.com/sbwml/packages_lang_golang ${HOME_PATH}/feeds/packages/lang/golang
 gitsvn https://github.com/sbwml/feeds_packages_lang_node-prebuilt ${HOME_PATH}/feeds/packages/lang/node
 
-
-if [[ ! -d "${HOME_PATH}/feeds/packages/lang/rust" ]]; then
-  gitsvn https://github.com/openwrt/packages/tree/openwrt-24.10/lang/rust ${HOME_PATH}/feeds/packages/lang/rust
-fi
-
 if [[ ! -d "${HOME_PATH}/feeds/packages/devel/packr" ]]; then
   gitsvn https://github.com/wydy/openwrt-common/tree/main/Share/packr ${HOME_PATH}/feeds/packages/devel/packr
 fi
