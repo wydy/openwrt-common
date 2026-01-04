@@ -11,34 +11,15 @@ apt-get update -y
 apt-get full-upgrade -y
 
 # 安装编译openwrt的依赖
-apt-get install -y ecj fastjar file gettext java-propose-classpath time xsltproc lib32gcc-s1
 apt-get install -y ack antlr3 asciidoc autoconf automake autopoint binutils bison build-essential \
-bzip2 ccache cmake cpio curl device-tree-compiler flex gawk gcc-multilib g++-multilib gettext \
-genisoimage git gperf haveged help2man intltool libc6-dev-i386 libelf-dev libfuse-dev libglib2.0-dev \
-libgmp3-dev libltdl-dev libmpc-dev libmpfr-dev libncurses5-dev libncursesw5-dev libpython3-dev \
-libreadline-dev libssl-dev libtool llvm lrzsz msmtp ninja-build p7zip p7zip-full patch pkgconf \
-python2 python3 python3-pip python3-cryptography python3-docutils python3-ply python3-pyelftools python3-requests
-python3-setuptools python3-distutils python3-netifaces qemu-utils rsync scons squashfs-tools subversion swig \
-texinfo uglifyjs upx-ucl unzip vim wget xmlto xxd zlib1g-dev
+  bzip2 ccache clang cmake cpio curl device-tree-compiler ecj fastjar flex gawk gettext gcc-multilib \
+  g++-multilib git gnutls-dev gperf haveged help2man intltool lib32gcc-s1 libc6-dev-i386 libelf-dev \
+  libglib2.0-dev libgmp3-dev libltdl-dev libmpc-dev libmpfr-dev libncurses-dev libpython3-dev \
+  libreadline-dev libssl-dev libtool libyaml-dev libz-dev lld llvm lrzsz mkisofs msmtp nano \
+  ninja-build p7zip p7zip-full patch pkgconf python3 python3-pip python3-ply python3-docutils \
+  python3-pyelftools qemu-utils re2c rsync scons squashfs-tools subversion swig texinfo uglifyjs \
+  upx-ucl unzip vim wget xmlto xxd zlib1g-dev zstd
 
-# alist依赖
-apt-get install -y libfuse-dev
-
-# N1打包需要的依赖
-apt-get install -y rename pigz clang gnupg snapd
-snap install jq
-apt-get install -y $(curl -fsSL https://tinyurl.com/ubuntu2204-make-openwrt)
-
-# 安装gcc g++
-GCC_VERSION="13"
-add-apt-repository --yes ppa:ubuntu-toolchain-r/test
-apt-get update -y
-apt-get install -y gcc-${GCC_VERSION}
-apt-get install -y g++-${GCC_VERSION}
-update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-${GCC_VERSION} 60
-update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-${GCC_VERSION} 60
-update-alternatives --config gcc
-update-alternatives --config g++
 
 cd $TMP_DIR
 # 安装golang
