@@ -330,9 +330,6 @@ fi
 
 # 使用自定义配置文件
 [[ -f "$MYCONFIG_FILE" ]] && cp -Rf $MYCONFIG_FILE .config
-
-# 执行feeds修改脚本
-source "${DIY_SOURCE_SH}"
 }
 
 
