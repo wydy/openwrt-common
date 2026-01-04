@@ -27,35 +27,11 @@ echo "${overall}" >> "${GITHUB_ENV}"
 function Diy_variable() {
 # 读取变量
 case "${SOURCE_CODE}" in
-COOLSNOWWOLF)
-  variable REPO_URL="https://github.com/coolsnowwolf/lede"
-  variable SOURCE="Lede"
-  variable SOURCE_OWNER="Lean"
-  variable LUCI_EDITION="23.05"
-  variable DISTRIB_SOURCECODE="lede"
-  variable GENE_PATH="${HOME_PATH}/package/base-files/files/bin/config_generate"
-;;
-LIENOL)
-  variable REPO_URL="https://github.com/Lienol/openwrt"
-  variable SOURCE="Lienol"
-  variable SOURCE_OWNER="Lienol"
-  variable DISTRIB_SOURCECODE="lienol"
-  variable LUCI_EDITION="$(echo "${REPO_BRANCH}" |sed 's/openwrt-//g')"
-  variable GENE_PATH="${HOME_PATH}/package/base-files/files/bin/config_generate"
-;;
 IMMORTALWRT)
   variable REPO_URL="https://github.com/immortalwrt/immortalwrt"
   variable SOURCE="Immortalwrt"
   variable SOURCE_OWNER="ctcgfw"
   variable DISTRIB_SOURCECODE="immortalwrt"
-  variable LUCI_EDITION="$(echo "${REPO_BRANCH}" |sed 's/openwrt-//g')"
-  variable GENE_PATH="${HOME_PATH}/package/base-files/files/bin/config_generate"
-;;
-XWRT)
-  variable REPO_URL="https://github.com/x-wrt/x-wrt"
-  variable SOURCE="Xwrt"
-  variable SOURCE_OWNER="ptpt52"
-  variable DISTRIB_SOURCECODE="xwrt"
   variable LUCI_EDITION="$(echo "${REPO_BRANCH}" |sed 's/openwrt-//g')"
   variable GENE_PATH="${HOME_PATH}/package/base-files/files/bin/config_generate"
 ;;
@@ -66,32 +42,6 @@ OFFICIAL)
   variable DISTRIB_SOURCECODE="official"
   variable LUCI_EDITION="$(echo "${REPO_BRANCH}" |sed 's/openwrt-//g')"
   variable GENE_PATH="${HOME_PATH}/package/base-files/files/bin/config_generate"
-;;
-MT798X)
-  if [[ "${REPO_BRANCH}" == "hanwckf-21.02" ]]; then
-    echo "hanwckf-21.02"
-    variable REPO_URL="https://github.com/hanwckf/immortalwrt-mt798x"
-    variable SOURCE="Mt798x"
-    variable SOURCE_OWNER="hanwckf"
-    variable REPO_BRANCH="openwrt-21.02"
-    variable DISTRIB_SOURCECODE="immortalwrt"
-    variable LUCI_EDITION="$(echo "${REPO_BRANCH}" |sed 's/openwrt-//g')"
-    variable GENE_PATH="${HOME_PATH}/package/base-files/files/bin/config_generate"
-  else
-    variable REPO_URL="https://github.com/padavanonly/immortalwrt-mt798x-6.6"
-    variable SOURCE="Mt798x"
-    variable SOURCE_OWNER="padavanonly"
-    if [[ "${REPO_BRANCH}" == "openwrt-24.10-6.6" ]]; then
-      variable LUCI_EDITION="24.10"
-    elif [[ "${REPO_BRANCH}" == "2410" ]]; then
-      variable REPO_BRANCH="openwrt-24.10-6.6"
-      variable LUCI_EDITION="24.10"
-    else
-      variable LUCI_EDITION="$(echo "${REPO_BRANCH}" |sed 's/openwrt-//g')"
-    fi
-    variable DISTRIB_SOURCECODE="immortalwrt"
-    variable GENE_PATH="${HOME_PATH}/package/base-files/files/bin/config_generate"
-  fi
 ;;
 *)
   TIME r "不支持${SOURCE_CODE}此源码，当前只支持COOLSNOWWOLF、LIENOL、IMMORTALWRT、XWRT、OFFICIALT、MT798X"
@@ -180,19 +130,19 @@ else
   gitsvn https://github.com/281677160/luci-theme-argon/tree/18.06 "${HOME_PATH}/package/luci-theme-argon"
 fi
 
-echo "src-git danshui https://github.com/281677160/openwrt-package.git;$SOURCE" >> "${HOME_PATH}/feeds.conf.default"
-echo "src-git dstheme https://github.com/281677160/openwrt-package.git;$THEME_BRANCH" >> "${HOME_PATH}/feeds.conf.default"
+echo "src-git danshui https://github.com/wydy/openwrt-package.git;$SOURCE" >> "${HOME_PATH}/feeds.conf.default"
+echo "src-git dstheme https://github.com/wydy/openwrt-package.git;$THEME_BRANCH" >> "${HOME_PATH}/feeds.conf.default"
 [[ "${OpenClash_branch}" == "1" ]] && echo "src-git OpenClash https://github.com/vernesong/OpenClash.git;master" >> "${HOME_PATH}/feeds.conf.default"
 [[ "${OpenClash_branch}" == "2" ]] && echo "src-git OpenClash https://github.com/vernesong/OpenClash.git;dev" >> "${HOME_PATH}/feeds.conf.default"
 
 # 增加中文语言包
 if [[ -z "$(find "$HOME_PATH/package" -type d -name "default-settings" -print)" ]] && [[ "${THEME_BRANCH}" == "Theme2" ]]; then
-  gitsvn https://github.com/281677160/common/tree/main/Share/default-settings "${HOME_PATH}/package/default-settings"
+  gitsvn https://github.com/wydy/openwrt-common/tree/main/Share/default-settings "${HOME_PATH}/package/default-settings"
   grep -qw "libustream-wolfssl" "${HOME_PATH}/include/target.mk" && sed -i 's?\<libustream-wolfssl\>?libustream-openssl?g' "${HOME_PATH}/include/target.mk"
   ! grep -qw "dnsmasq-full" "${HOME_PATH}/include/target.mk" && sed -i 's?\<dnsmasq\>?dnsmasq-full?g' "${HOME_PATH}/include/target.mk"
   ! grep -qw "default-settings" "${HOME_PATH}/include/target.mk" && sed -i 's?DEFAULT_PACKAGES:=?DEFAULT_PACKAGES:=default-settings?g' "${HOME_PATH}/include/target.mk"
 elif [[ -z "$(find "$HOME_PATH/package" -type d -name "default-settings" -print)" ]] && [[ "${THEME_BRANCH}" == "Theme1" ]]; then
-  gitsvn https://github.com/281677160/common/tree/main/Share/default-setting "${HOME_PATH}/package/default-settings"
+  gitsvn https://github.com/wydy/openwrt-common/tree/main/Share/default-setting "${HOME_PATH}/package/default-settings"
   grep -qw "libustream-wolfssl" "${HOME_PATH}/include/target.mk" && sed -i 's?\<libustream-wolfssl\>?libustream-openssl?g' "${HOME_PATH}/include/target.mk"
   ! grep -qw "dnsmasq-full" "${HOME_PATH}/include/target.mk" && sed -i 's?\<dnsmasq\>?dnsmasq-full?g' "${HOME_PATH}/include/target.mk"
   ! grep -qw "default-settings" "${HOME_PATH}/include/target.mk" && sed -i 's?DEFAULT_PACKAGES:=?DEFAULT_PACKAGES:=default-settings?g' "${HOME_PATH}/include/target.mk"
@@ -213,30 +163,73 @@ fi
 
 # 更新feeds后再次修改补充
 cd ${HOME_PATH}
-z="luci-theme-argon,luci-app-argon-config,luci-theme-Butterfly,luci-theme-netgear,luci-theme-atmaterial, \
-luci-theme-rosy,luci-theme-darkmatter,luci-theme-infinityfreedom,luci-theme-design,luci-app-design-config, \
-luci-theme-bootstrap-mod,luci-theme-freifunk-generic,luci-theme-opentomato,luci-theme-kucat, \
-luci-app-eqos,adguardhome,luci-app-adguardhome,mosdns,luci-app-mosdns,luci-app-openclash, \
-luci-app-gost,gost,luci-app-smartdns,smartdns,luci-app-wizard,luci-app-msd_lite,msd_lite, \
-luci-app-ssr-plus,luci-app-passwall,luci-app-passwall2,shadowsocksr-libev,v2dat,v2ray-geodata, \
-luci-app-wechatpush,v2ray-core,v2ray-plugin,v2raya,xray-core,xray-plugin,luci-app-alist,alist"
-t=(${z//,/ })
-for x in "${t[@]}"; do
+PACKAGES_TO_REMOVE=(
+    "luci-theme-argon"
+    "luci-app-argon-config"
+    "luci-theme-Butterfly"
+    "luci-theme-netgear"
+    "luci-theme-atmaterial"
+    "luci-theme-rosy"
+    "luci-theme-darkmatter"
+    "luci-theme-infinityfreedom"
+    "luci-theme-design"
+    "luci-app-design-config"
+    "luci-theme-bootstrap-mod"
+    "luci-theme-freifunk-generic"
+    "luci-theme-opentomato"
+    "luci-theme-kucat"
+    "luci-app-eqos"
+    "adguardhome"
+    "luci-app-adguardhome"
+    "mosdns"
+    "luci-app-mosdns"
+    "luci-app-openclash"
+    "luci-app-gost"
+    "gost"
+    "luci-app-smartdns"
+    "smartdns"
+    "luci-app-wizard"
+    "luci-app-msd_lite"
+    "msd_lite"
+    "luci-app-ssr-plus"
+    "luci-app-passwall"
+    "luci-app-passwall2"
+    "shadowsocksr-libev"
+    "v2dat"
+    "v2ray-geodata"
+    "luci-app-wechatpush"
+    "v2ray-core"
+    "v2ray-plugin"
+    "v2raya"
+    "xray-core"
+    "xray-plugin"
+    "luci-app-alist"
+    "alist"
+)
+
+EXCLUDE_DIRS=(
+    "${HOME_PATH}/feeds/danshui"
+    "${HOME_PATH}/feeds/dstheme"
+    "${HOME_PATH}/feeds/OpenClash"
+    "${HOME_PATH}/package/luci-theme-argon"
+)
+
+for package in "${PACKAGES_TO_REMOVE[@]}"; do
     find "${HOME_PATH}/feeds" "${HOME_PATH}/package" \
-        -path "${HOME_PATH}/feeds/danshui" -prune -o \
-        -path "${HOME_PATH}/feeds/dstheme" -prune -o \
-        -path "${HOME_PATH}/feeds/OpenClash" -prune -o \
-        -path "${HOME_PATH}/package/luci-theme-argon" -prune -o \
-        -name "$x" -type d -exec rm -rf {} +
+        -path "${EXCLUDE_DIRS[0]}" -prune -o \
+        -path "${EXCLUDE_DIRS[1]}" -prune -o \
+        -path "${EXCLUDE_DIRS[2]}" -prune -o \
+        -path "${EXCLUDE_DIRS[3]}" -prune -o \
+        -name "$package" -type d -exec rm -rf {} +
 done
 
-if [[ ! "${REPO_BRANCH}" =~ ^(main|master|(openwrt-)?(24\.10))$ ]]; then
+if [[ ! "${REPO_BRANCH}" =~ ^(main|master|(openwrt-)?(24\.10)|(openwrt-)?(25\.12))$ ]]; then
   rm -rf ${HOME_PATH}/feeds/danshui/luci-app-fancontrol
   rm -rf ${HOME_PATH}/feeds/danshui/luci-app-qmodem
   rm -rf ${HOME_PATH}/feeds/danshui/relevance/quectel_cm-5G
 fi
 
-if [[ "${REPO_BRANCH}" =~ ^(2410|(openwrt-)?(24\.10))$ ]]; then
+if [[ "${REPO_BRANCH}" =~ ^(2410|2512|(openwrt-)?(24\.10)|(openwrt-)?(25\.12))$ ]]; then
   rm -rf ${HOME_PATH}/feeds/danshui/luci-app-quickstart
   rm -rf ${HOME_PATH}/feeds/danshui/luci-app-linkease
   rm -rf ${HOME_PATH}/feeds/danshui/luci-app-istorex
@@ -251,14 +244,6 @@ fi
 gitsvn https://github.com/sbwml/packages_lang_golang ${HOME_PATH}/feeds/packages/lang/golang
 gitsvn https://github.com/sbwml/feeds_packages_lang_node-prebuilt ${HOME_PATH}/feeds/packages/lang/node
 
-# store插件依赖
-if [[ -d "${HOME_PATH}/feeds/danshui/relevance/nas-packages/network/services" ]] && [[ ! -d "${HOME_PATH}//package/network/services/ddnsto" ]]; then
-  mv ${HOME_PATH}/feeds/danshui/relevance/nas-packages/network/services/* ${HOME_PATH}/package/network/services
-fi
-if [[ -d "${HOME_PATH}/feeds/danshui/relevance/nas-packages/multimedia/ffmpeg-remux" ]] && [[ ! -d "${HOME_PATH}/feeds/packages/multimedia/ffmpeg-remux" ]]; then
-  mv ${HOME_PATH}/feeds/danshui/relevance/nas-packages/multimedia/ffmpeg-remux ${HOME_PATH}/feeds/packages/multimedia/ffmpeg-remux
-fi
-
 # tproxy补丁
 bash "$LINSHI_COMMON/Share/tproxy/nft_tproxy.sh"
 
@@ -267,7 +252,7 @@ if [[ ! -d "${HOME_PATH}/feeds/packages/lang/rust" ]]; then
 fi
 
 if [[ ! -d "${HOME_PATH}/feeds/packages/devel/packr" ]]; then
-  gitsvn https://github.com/281677160/common/tree/main/Share/packr ${HOME_PATH}/feeds/packages/devel/packr
+  gitsvn https://github.com/wydy/openwrt-common/tree/main/Share/packr ${HOME_PATH}/feeds/packages/devel/packr
 fi
 
 # files大法，设置固件无烦恼
@@ -368,7 +353,7 @@ if [[ "${REPO_BRANCH}" == "openwrt-19.07" ]]; then
   rm -fr ${HOME_PATH}/feeds/danshui/luci-app-kodexplorer
 fi
 if [[ "${REPO_BRANCH}" =~ (main|master|openwrt-24.10) ]]; then
-  gitsvn https://github.com/281677160/common/blob/main/Share/luci-app-nginx-pingos/Makefile ${HOME_PATH}/feeds/danshui/luci-app-nginx-pingos/Makefile
+  gitsvn https://github.com/wydy/openwrt-common/blob/main/Share/luci-app-nginx-pingos/Makefile ${HOME_PATH}/feeds/danshui/luci-app-nginx-pingos/Makefile
 fi
 if [[ "${REPO_BRANCH}" == *"23.05"* ]]; then
   gitsvn https://github.com/coolsnowwolf/packages/tree/152022403f0ab2a85063ae1cd9687bd5240fe9b7/net/dnsproxy ${HOME_PATH}/feeds/packages/net/dnsproxy
@@ -904,7 +889,7 @@ esac
 if [[ -n "${Arch}" ]] && [[ "${AdGuardHome_Core}" == "1" ]]; then
   rm -rf ${HOME_PATH}/AdGuardHome && rm -rf ${HOME_PATH}/files/usr/bin
   if [[ ! -f "$LINSHI_COMMON/language/AdGuardHome.api" ]]; then
-    if ! wget -q https://github.com/281677160/common/releases/download/API/AdGuardHome.api -O "$LINSHI_COMMON/language/AdGuardHome.api"; then
+    if ! wget -q https://github.com/wydy/openwrt-common/releases/download/API/AdGuardHome.api -O "$LINSHI_COMMON/language/AdGuardHome.api"; then
       TIME r "AdGuardHome.api下载失败"
     fi
   fi
