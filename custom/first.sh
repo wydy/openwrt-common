@@ -264,7 +264,7 @@ Diy_four() {
 Diy_memu() {
     Diy_one
     Diy_two
-    Diy_three
+    #Diy_three
     Diy_four
 }
 
