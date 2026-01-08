@@ -1082,7 +1082,7 @@ else
 fi
 
 if [[ "$url" == *"tree"* ]] && [[ -n "$path_after_branch" ]]; then
-    if git clone -q --no-checkout "$base_url" "$tmpdir"; then
+    if git clone -q --no-checkout --depth=1 "$base_url" "$tmpdir"; then
         cd "$tmpdir"
         git sparse-checkout init --cone > /dev/null 2>&1
         git sparse-checkout set "$path_after_branch" > /dev/null 2>&1
