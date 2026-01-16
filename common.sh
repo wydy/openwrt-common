@@ -232,10 +232,6 @@ if [[ ! -d "${HOME_PATH}/package/network/config/firewall4" ]]; then
   rm -rf ${HOME_PATH}/feeds/danshui/luci-app-homeproxy
 fi
 
-# 更新golang和node版本
-gitsvn https://github.com/sbwml/packages_lang_golang ${HOME_PATH}/feeds/packages/lang/golang
-gitsvn https://github.com/sbwml/feeds_packages_lang_node-prebuilt ${HOME_PATH}/feeds/packages/lang/node
-
 # files大法，设置固件无烦恼
 if [ -d "${BUILD_PATCHES}" ]; then
   find "${BUILD_PATCHES}" -type f -name '*.patch' -print0 | sort -z | xargs -I % -t -0 -n 1 sh -c "cat '%'  | patch -d './' -p1 --forward --no-backup-if-mismatch"
