@@ -362,11 +362,6 @@ if [[ "${TARGET_BOARD}" =~ (armvirt|armsr) ]]; then
   done
 fi
 
-if [[ ! -f "${HOME_PATH}/staging_dir/host/bin/upx" ]]; then
-  cp -Rf /usr/bin/upx ${HOME_PATH}/staging_dir/host/bin/upx
-  cp -Rf /usr/bin/upx-ucl ${HOME_PATH}/staging_dir/host/bin/upx-ucl
-fi
-
 # files文件夹删除LICENSE,README
 [[ -d "${HOME_PATH}/files" ]] && sudo chmod +x ${HOME_PATH}/files
 rm -rf ${HOME_PATH}/files/{LICENSE,README}
