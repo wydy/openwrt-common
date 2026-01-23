@@ -132,15 +132,7 @@ fi
 # 更新feeds后再次修改补充
 cd ${HOME_PATH}
 PACKAGES_TO_REMOVE=(
-    "adguardhome"
-    "luci-app-adguardhome"
-    "mosdns"
-    "luci-app-openclash"
-    "luci-app-gost"
-    "gost"
-    "luci-app-msd_lite"
-    "msd_lite"
-    "luci-app-ssr-plus"
+
 )
 
 EXCLUDE_DIRS=(
@@ -667,90 +659,6 @@ fi
 [[ -n "${amlogic_model}" ]] && echo "kernel_repo=ophub/kernel" >> ${GITHUB_ENV}
 [[ -n "${kernel_usage}" ]] && echo "kernel_usage=${kernel_usage}" >> ${GITHUB_ENV}
 [[ -n "${amlogic_model}" ]] && echo "builder_name=ophub" >> ${GITHUB_ENV}
-
-# adguardhome增加核心
-ARCH_TYPE=$(grep "CONFIG_ARCH=\"" "${HOME_PATH}/.config" | cut -d '"' -f 2)
-# 层级式判断架构类型
-case "$ARCH_TYPE" in
-    "x86_64")
-        Arch="linux_amd64"
-        echo "CPU架构：amd64" ;;
-    "i386")
-        Arch="linux_386"
-        echo "CPU架构：X86 32" ;;
-    "aarch64")
-        Arch="linux_arm64"
-        echo "CPU架构：arm64" ;;
-    "arm")
-        if grep -q "CONFIG_ARM_V8=y" "${HOME_PATH}/.config"; then
-            Arch="linux_arm64"
-            echo "CPU架构：arm64"
-        elif grep -q "CONFIG_arm_v7=y" "${HOME_PATH}/.config"; then
-            Arch="linux_armv7"
-            echo "CPU架构：armv7"
-        elif grep -q "CONFIG_VFP=y" "${HOME_PATH}/.config"; then
-            Arch="linux_armv6"
-            echo "CPU架构：armv6"
-        else
-            Arch="linux_armv5"
-            echo "CPU架构：armv5"
-        fi ;;
-    "mips" | "mipsel" | "mips64" | "mips64el")
-        if grep -q "CONFIG_64BIT=y" "${HOME_PATH}/.config"; then
-            if [[ "${ARCH_TYPE}" == "mips64el" ]]; then
-                abi="64le"
-            else
-                abi="64"
-            fi
-        fi
-        if grep -q "CONFIG_SOFT_FLOAT=y" "${HOME_PATH}/.config"; then
-            suffix="_softfloat"
-        else
-            suffix=""
-        fi
-        Arch="linux_${ARCH_TYPE}${abi}${suffix}"
-        echo "CPU架构：${ARCH_TYPE}${abi}${suffix}" ;;
-    "riscv" | "riscv64")
-        if grep -q "CONFIG_64BIT=y" "${HOME_PATH}/.config"; then
-            Arch="linux_riscv64"
-        else
-            Arch="linux_riscv32"
-        fi ;;
-    *)
-        echo "未知架构类型"
-        Arch="" ;;
-esac
-
-if [[ -n "${Arch}" ]] && [[ "${AdGuardHome_Core}" == "1" ]]; then
-  rm -rf ${HOME_PATH}/AdGuardHome && rm -rf ${HOME_PATH}/files/usr/bin
-  if [[ ! -f "$LINSHI_COMMON/language/AdGuardHome.api" ]]; then
-    if ! wget -q https://github.com/wydy/openwrt-common/releases/download/API/AdGuardHome.api -O "$LINSHI_COMMON/language/AdGuardHome.api"; then
-      TIME r "AdGuardHome.api下载失败"
-    fi
-  fi
-  if [[ -f "$LINSHI_COMMON/language/AdGuardHome.api" ]]; then
-    latest_ver="$(grep -E 'tag_name' "$LINSHI_COMMON/language/AdGuardHome.api" |grep -E 'v[0-9.]+' -o 2>/dev/null)"
-    wget -q https://github.com/AdguardTeam/AdGuardHome/releases/download/${latest_ver}/AdGuardHome_${Arch}.tar.gz
-    if [[ -f "AdGuardHome_${Arch}.tar.gz" ]]; then
-      tar -zxf AdGuardHome_${Arch}.tar.gz -C ${HOME_PATH}
-    fi
-    mkdir -p ${HOME_PATH}/files/usr/bin
-    if [[ -f "${HOME_PATH}/AdGuardHome/AdGuardHome" ]]; then
-      mv -f ${HOME_PATH}/AdGuardHome ${HOME_PATH}/files/usr/bin/
-      chmod +x ${HOME_PATH}/files/usr/bin/AdGuardHome/AdGuardHome
-      echo -e "\nCONFIG_PACKAGE_luci-app-adguardhome=y" >> ${HOME_PATH}/.config
-      echo "增加luci-app-adguardhome和下载AdGuardHome核心完成"
-    else
-      echo -e "\nCONFIG_PACKAGE_luci-app-adguardhome=y" >> ${HOME_PATH}/.config
-      echo "下载AdGuardHome核心失败"
-    fi
-    rm -rf ${HOME_PATH}/{AdGuardHome_${Arch}.tar.gz,AdGuardHome}
-  fi
-else
-  if [[ -f "${HOME_PATH}/files/usr/bin/AdGuardHome" ]] && [[ ! "${AdGuardHome_Core}" == "1" ]]; then
-    rm -rf ${HOME_PATH}/files/usr/bin/AdGuardHome
-  fi
-fi
 
 # 源码内核版本号
 KERNEL_PATCH="$(awk -F'[:=]' '/KERNEL_PATCHVER/{print $NF; exit}' "${HOME_PATH}/target/linux/${TARGET_BOARD}/Makefile")"
