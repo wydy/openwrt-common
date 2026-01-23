@@ -112,19 +112,6 @@ grep -q "admin:" ${FILES_PATH} && sed -i 's/admin:.*/admin::0:0:99999:7:::/g' "$
 sed -i '1i\src-git passwall_luci https://github.com/Openwrt-Passwall/openwrt-passwall.git;main' "${HOME_PATH}/feeds.conf.default"
 sed -i '1i\src-git passwall_packages https://github.com/Openwrt-Passwall/openwrt-passwall-packages.git;main' "${HOME_PATH}/feeds.conf.default"
 
-srcdir="$(mktemp -d)"
-SRC_LIANJIE=$(grep -Po '^src-git(?:-full)?\s+luci\s+\Khttps?://[^;\s]+' "${LICENSES_DOC}/feeds.conf.default")
-SRC_FENZHIHAO=$(grep -Po '^src-git(?:-full)?\s+luci\s+[^;\s]+;\K[^\s]+' "${LICENSES_DOC}/feeds.conf.default" || echo "")
-if [[ -n "${SRC_FENZHIHAO}" ]]; then
-  git clone --single-branch --depth=1 --branch="${SRC_FENZHIHAO}" "${SRC_LIANJIE}" "${srcdir}"
-else
-  git clone --depth=1 "${SRC_LIANJIE}" "${srcdir}"
-fi
-if [[ $? -ne 0 ]];then
-  TIME r "文件下载失败,请检查网络"
-  exit 1
-fi
-
 THEME_BRANCH="Theme2"
 
 echo "src-git danshui https://github.com/281677160/openwrt-package.git;$SOURCE" >> "${HOME_PATH}/feeds.conf.default"
@@ -132,14 +119,7 @@ echo "src-git dstheme https://github.com/281677160/openwrt-package.git;$THEME_BR
 [[ "${OpenClash_branch}" == "1" ]] && echo "src-git OpenClash https://github.com/vernesong/OpenClash.git;master" >> "${HOME_PATH}/feeds.conf.default"
 [[ "${OpenClash_branch}" == "2" ]] && echo "src-git OpenClash https://github.com/vernesong/OpenClash.git;dev" >> "${HOME_PATH}/feeds.conf.default"
 
-# 增加中文语言包
-if [[ -z "$(find "$HOME_PATH/package" -type d -name "default-settings" -print)" ]] && [[ "${THEME_BRANCH}" == "Theme2" ]]; then
-  gitsvn https://github.com/wydy/openwrt-common/tree/main/Share/default-settings "${HOME_PATH}/package/default-settings"
-elif [[ -z "$(find "$HOME_PATH/package" -type d -name "default-settings" -print)" ]] && [[ "${THEME_BRANCH}" == "Theme1" ]]; then
-  gitsvn https://github.com/wydy/openwrt-common/tree/main/Share/default-setting "${HOME_PATH}/package/default-settings"
-fi
-
-# zzz-default-settings文件
+# 读取default-settings/files/99-default-settings到ZZZ_PATH并清理登录banner
 variable ZZZ_PATH="$(find "$HOME_PATH/package" -name "*-default-settings" -not -path "A/exclude_dir/*" -print)"
 [[ -n "${ZZZ_PATH}" ]] && grep -q "openwrt_banner" "${ZZZ_PATH}" && sed -i '/openwrt_banner/d' "${ZZZ_PATH}"
 
@@ -177,7 +157,6 @@ for package in "${PACKAGES_TO_REMOVE[@]}"; do
         -path "${EXCLUDE_DIRS[0]}" -prune -o \
         -path "${EXCLUDE_DIRS[1]}" -prune -o \
         -path "${EXCLUDE_DIRS[2]}" -prune -o \
-        -path "${EXCLUDE_DIRS[3]}" -prune -o \
         -name "$package" -type d -exec rm -rf {} +
 done
 
