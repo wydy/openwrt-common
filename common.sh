@@ -188,8 +188,6 @@ PACKAGES_TO_REMOVE=(
     "luci-app-msd_lite"
     "msd_lite"
     "luci-app-ssr-plus"
-    "luci-app-passwall"
-    "luci-app-passwall2"
     "shadowsocksr-libev"
     "v2dat"
     "v2ray-geodata"
