@@ -44,7 +44,7 @@ OFFICIAL)
   variable GENE_PATH="${HOME_PATH}/package/base-files/files/bin/config_generate"
 ;;
 *)
-  TIME r "不支持${SOURCE_CODE}此源码，当前只支持COOLSNOWWOLF、LIENOL、IMMORTALWRT、XWRT、OFFICIALT、MT798X"
+  TIME r "不支持${SOURCE_CODE}此源码，当前只支持IMMORTALWRT、OFFICIALT"
   exit 1
 ;;
 esac
