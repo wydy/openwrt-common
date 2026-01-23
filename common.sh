@@ -108,6 +108,10 @@ sed -i 's/root:.*/root::0:0:99999:7:::/g' "${FILES_PATH}"
 grep -q "admin:" ${FILES_PATH} && sed -i 's/admin:.*/admin::0:0:99999:7:::/g' "${FILES_PATH}"
 
 # 添加自定义插件源
+# Passwall
+echo "src-git passwall_packages https://github.com/Openwrt-Passwall/openwrt-passwall-packages.git;main" >> "${HOME_PATH}/feeds.conf.default"
+echo "src-git passwall_luci https://github.com/Openwrt-Passwall/openwrt-passwall.git;main" >> "${HOME_PATH}/feeds.conf.default"
+
 srcdir="$(mktemp -d)"
 SRC_LIANJIE=$(grep -Po '^src-git(?:-full)?\s+luci\s+\Khttps?://[^;\s]+' "${LICENSES_DOC}/feeds.conf.default")
 SRC_FENZHIHAO=$(grep -Po '^src-git(?:-full)?\s+luci\s+[^;\s]+;\K[^\s]+' "${LICENSES_DOC}/feeds.conf.default" || echo "")
