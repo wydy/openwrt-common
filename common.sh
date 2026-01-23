@@ -124,15 +124,8 @@ if [[ $? -ne 0 ]];then
   TIME r "文件下载失败,请检查网络"
   exit 1
 fi
-if [[ -d "${srcdir}/modules/luci-mod-system" ]]; then
-  THEME_BRANCH="Theme2"
-  rm -rf "${srcdir}"
-  gitsvn https://github.com/281677160/luci-theme-argon/tree/master "${HOME_PATH}/package/luci-theme-argon"
-else
-  THEME_BRANCH="Theme1"
-  rm -rf "${srcdir}"
-  gitsvn https://github.com/281677160/luci-theme-argon/tree/18.06 "${HOME_PATH}/package/luci-theme-argon"
-fi
+
+THEME_BRANCH="Theme2"
 
 echo "src-git danshui https://github.com/281677160/openwrt-package.git;$SOURCE" >> "${HOME_PATH}/feeds.conf.default"
 echo "src-git dstheme https://github.com/281677160/openwrt-package.git;$THEME_BRANCH" >> "${HOME_PATH}/feeds.conf.default"
@@ -162,8 +155,6 @@ fi
 # 更新feeds后再次修改补充
 cd ${HOME_PATH}
 PACKAGES_TO_REMOVE=(
-    "luci-theme-argon"
-    "luci-app-argon-config"
     "adguardhome"
     "luci-app-adguardhome"
     "mosdns"
@@ -179,7 +170,6 @@ EXCLUDE_DIRS=(
     "${HOME_PATH}/feeds/danshui"
     "${HOME_PATH}/feeds/dstheme"
     "${HOME_PATH}/feeds/OpenClash"
-    "${HOME_PATH}/package/luci-theme-argon"
 )
 
 for package in "${PACKAGES_TO_REMOVE[@]}"; do
