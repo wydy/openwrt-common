@@ -92,14 +92,6 @@ function Diy_checkout() {
 # 下载源码后，进行源码微调和增加插件源
 TIME y "正在执行：下载和整理应用,请耐心等候..."
 cd ${HOME_PATH}
-# 增加一些应用
-echo '#!/bin/sh' > "${DELETE}" && chmod +x "${DELETE}"
-if [[ -d "${LINSHI_COMMON}/auto-scripts" ]]; then
-  cp -Rf "$LINSHI_COMMON/auto-scripts" "${HOME_PATH}/package/auto-scripts"
-else
-  TIME r "缺少auto-scripts文件"
-  exit 1
-fi
 
 sed -i "s/ZHUJI_MING/${SOURCE}/g" "${DEFAULT_PATH}"
 sed -i "s/LUCI_EDITION/${LUCI_EDITION}/g" "${DEFAULT_PATH}"
