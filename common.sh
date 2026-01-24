@@ -723,16 +723,16 @@ function gitsvn() {
     local tmpdir="$(mktemp -d)"
     trap 'rm -rf "$tmpdir"' EXIT
 
-    # 去除末尾斜杠，规范化URL
+    # 规范化URL：去除末尾斜杠，支持带.git结尾
     url="${url%/}"
 
-    # 必须是完整的GitHub链接
+    # 必须是GitHub HTTPS链接
     if [[ ! $url =~ ^https://github\.com/ ]]; then
-        echo "无效的github链接"
+        echo "无效的GitHub链接（仅支持https://github.com/格式）"
         return 1
     fi
 
-    # 解析URL：owner/repo[/tree/branch[/subpath]][/blob/branch/filepath]
+    # 解析owner/repo/[(tree|blob)/branch[/path]]
     local path="${url#https://github.com/}"
     local owner="${path%%/*}"
     local rest="${path#*/}"
@@ -749,32 +749,36 @@ function gitsvn() {
         type="blob"
         branch="${BASH_REMATCH[1]}"
         subpath="${BASH_REMATCH[3]:-}"
-        [[ -z $subpath ]] && { echo "错误链接,文件名为空"; return 1; }
+        [[ -z $subpath ]] && { echo "错误：单文件链接缺少文件名"; return 1; }
     elif [[ -z $remainder ]]; then
         type="repo"
+        branch="main"  # 默认分支（可根据实际调整为 master 或 main）
     else
-        echo "无效的github链接"
+        echo "无效的GitHub链接格式"
         return 1
     fi
 
-    [[ -z $repo ]] && { echo "错误链接,仓库名为空"; return 1; }
+    [[ -z $repo ]] && { echo "错误：仓库名为空"; return 1; }
 
     local base_url="https://github.com/$owner/$repo"
 
-    # 用于消息和默认路径的名称
-    local files_name
+    # 显示名称（用于日志）
+    local display_name
     if [[ $type == "blob" ]]; then
-        files_name="$subpath"
+        display_name="${subpath##*/}"
     elif [[ -n $subpath ]]; then
-        files_name="${subpath##*/}"
+        display_name="${subpath##*/}"
     else
-        files_name="$repo"
+        display_name="$repo${branch:+ ($branch)}"
     fi
 
-    # 计算目标路径
+    # 目标路径计算（关键改进：完美支持相对/绝对路径）
     local store_away
     if [[ $route == "all" ]]; then
         store_away="$HOME_PATH/"
+    elif [[ $route =~ ^/ ]]; then
+        # 绝对路径直接使用（支持用户传 ${HOME_PATH}/... 展开后的路径）
+        store_away="$route"
     elif [[ $route == openwrt/* ]]; then
         store_away="$HOME_PATH/${route#openwrt/}"
     elif [[ $route == ./* ]]; then
@@ -782,73 +786,71 @@ function gitsvn() {
     elif [[ -n $route ]]; then
         store_away="$HOME_PATH/$route"
     else
-        store_away="$HOME_PATH/$files_name"
+        store_away="$HOME_PATH/$display_name"
     fi
 
-    # 下载逻辑
+    # 下载与复制
     if [[ $type == "blob" ]]; then
-        # 单文件下载（raw）
-        local download_url="https://raw.githubusercontent.com/$owner/$repo/$branch/$subpath"
-        local target_file="$store_away"
-        mkdir -p "$(dirname "$target_file")"
-        if curl -fsSL "$download_url" -o "$target_file"; then
-            echo "$files_name 文件下载成功"
+        # 单文件（raw）
+        local raw_url="https://raw.githubusercontent.com/$owner/$repo/$branch/$subpath"
+        mkdir -p "$(dirname "$store_away")"
+        if curl -fsSL "$raw_url" -o "$store_away"; then
+            chmod +x "$store_away" 2>/dev/null || true  # 尝试保留可执行权限
+            echo "${display_name} 下载完成"
         else
-            echo "$files_name 文件下载失败"
+            echo "${display_name} 下载失败"
             return 1
         fi
     else
-        # 目录/仓库下载
+        # 仓库/目录
         local source_dir
-        local do_sed=false
+        local apply_sed=false
 
         if [[ -n $subpath ]]; then
-            # 子目录：使用 sparse-checkout
-            do_sed=true
+            # 子目录 → sparse-checkout（内容直接在 tmpdir/subpath）
+            apply_sed=true
             git clone -q --no-checkout "$base_url" "$tmpdir" || \
-                { echo "$files_name 文件下载失败"; return 1; }
-            git -C "$tmpdir" sparse-checkout init --cone >/dev/null 2>&1
-            git -C "$tmpdir" sparse-checkout set "$subpath" >/dev/null 2>&1
-            git -C "$tmpdir" checkout "$branch" -q || \
-                { echo "$files_name 文件下载失败"; return 1; }
+                { echo "${display_name} 下载失败（clone）"; return 1; }
+            pushd "$tmpdir" >/dev/null
+            git sparse-checkout init --cone >/dev/null 2>&1
+            git sparse-checkout set "$subpath" >/dev/null 2>&1
+            git checkout "$branch" -q || \
+                { echo "${display_name} 下载失败（checkout）"; return 1; }
+            popd >/dev/null
             source_dir="$tmpdir/$subpath"
         else
             # 整个仓库
-            if [[ -n $branch ]]; then
-                git clone -q --single-branch --depth 1 --branch "$branch" "$base_url" "$tmpdir" || \
-                    { echo "$files_name 文件下载失败"; return 1; }
-            else
-                git clone -q --depth 1 "$base_url" "$tmpdir" || \
-                    { echo "$files_name 文件下载失败"; return 1; }
-            fi
+            local clone_args=( -q --depth 1 )
+            [[ -n $branch ]] && clone_args+=( --single-branch --branch "$branch" )
+            git clone "${clone_args[@]}" "$base_url" "$tmpdir" || \
+                { echo "${display_name} 下载失败（clone）"; return 1; }
             source_dir="$tmpdir"
         fi
 
-        # 只在下载子目录时修复 LuCI/lang 路径（原脚本行为）
-        if $do_sed; then
-            grep -rl 'include ../../luci.mk' "$source_dir" 2>/dev/null | \
-                xargs -r sed -i 's|include ../../luci.mk|include \$(TOPDIR)/feeds/luci/luci.mk|g'
-            grep -rl 'include ../../lang/' "$source_dir" 2>/dev/null | \
-                xargs -r sed -i 's|include ../../lang/|include \$(TOPDIR)/feeds/packages/lang/|g'
+        # LuCI/lang 路径修复（仅子目录模式，原脚本逻辑）
+        if $apply_sed; then
+            find "$source_dir" -type f \( -name "*.mk" -o -name "*.sh" \) -exec sed -i \
+                -e 's|include ../../luci.mk|include $(TOPDIR)/feeds/luci/luci.mk|g' \
+                -e 's|include ../../lang/|include $(TOPDIR)/feeds/packages/lang/|g' {} +
         fi
 
-        # 复制到目标位置
+        # 复制
         if [[ $route == "all" ]]; then
-            # 替换模式：删除已有文件后直接复制内容到根目录
+            # 替换根目录下对应文件（不创建子目录，直接放内容）
             find "$source_dir" -mindepth 1 -printf '%P\n' | while read -r item; do
                 rm -rf "$HOME_PATH/$item"
             done
-            cp -a "$source_dir"/. "$HOME_PATH/" || \
-                { echo "$files_name 文件下载失败"; return 1; }
+            cp -af "$source_dir"/. "$HOME_PATH/" || \
+                { echo "${display_name} 复制失败"; return 1; }
         else
-            # 普通模式：删除目标后复制整个目录
+            # 完全替换目标目录
             rm -rf "$store_away"
             mkdir -p "$(dirname "$store_away")"
-            cp -a "$source_dir" "$store_away" || \
-                { echo "$files_name 文件下载失败"; return 1; }
+            cp -af "$source_dir" "$store_away" || \
+                { echo "${display_name} 复制失败"; return 1; }
         fi
 
-        echo "$files_name 文件下载完成"
+        echo "${display_name} 下载完成 → $store_away"
     fi
 }
 
