@@ -715,88 +715,140 @@ echo "FIRMWARE_DATE=$(date +%Y-%m%d-%H%M)" >> ${GITHUB_ENV}
 }
 
 
-gitsvn() {
+function gitsvn() {
     local url="${1%.git}"
-    local route="$2"
-    local home_dir="${HOME_PATH}"
-    
-    # 1. 变量初始化
-    local tmpdir; tmpdir=$(mktemp -d)
-    local base_url repo_name branch path_after_branch files_name store_away mode
-    
-    # 确保无论脚本如何退出，都会删除临时文件夹
-    trap 'rm -rf "$tmpdir"' RETURN EXIT
+    local route="${2:-}"
+    local tmpdir="$(mktemp -d)"
+    trap 'rm -rf "$tmpdir"' EXIT
 
-    # 2. 解析 GitHub 链接 (使用 Bash 内置正则和修剪，减少 fork)
-    if [[ "$url" =~ github\.com/([^/]+)/([^/]+)/tree/([^/]+)/(.*) ]]; then
-        mode="tree"
-        repo_name="${BASH_REMATCH[2]}"
-        branch="${BASH_REMATCH[3]}"
-        path_after_branch="${BASH_REMATCH[4]}"
-        base_url="https://github.com/${BASH_REMATCH[1]}/${repo_name}"
-        files_name="${path_after_branch##*/}"
-    elif [[ "$url" =~ github\.com/([^/]+)/([^/]+)/blob/([^/]+)/(.*) ]]; then
-        mode="blob"
-        branch="${BASH_REMATCH[3]}"
-        path_after_branch="${BASH_REMATCH[4]}"
-        files_name="${path_after_branch##*/}"
-        local download_url="https://raw.githubusercontent.com/${BASH_REMATCH[1]}/${BASH_REMATCH[2]}/$branch/$path_after_branch"
-    elif [[ "$url" =~ github\.com/([^/]+)/([^/]+) ]]; then
-        mode="repo"
-        repo_name="${BASH_REMATCH[2]}"
-        base_url="https://github.com/${BASH_REMATCH[1]}/${repo_name}"
-        files_name="$repo_name"
-    else
-        echo "Error: 无效的 GitHub 链接"
+    # 去除末尾斜杠，规范化URL
+    url="${url%/}"
+
+    # 必须是完整的GitHub链接
+    if [[ ! $url =~ ^https://github\.com/ ]]; then
+        echo "无效的github链接"
         return 1
     fi
 
-    # 3. 确定存储路径 (store_away)
-    case "$route" in
-        "all")      store_away="$home_dir" ;;
-        openwrt/*)  store_away="$home_dir/${route#openwrt/}" ;;
-        ./*)        store_away="$home_dir/${route#./}" ;;
-        "")         store_away="$home_dir/$files_name" ;;
-        *)          store_away="$route" ;;
-    esac
+    # 解析URL：owner/repo[/tree/branch[/subpath]][/blob/branch/filepath]
+    local path="${url#https://github.com/}"
+    local owner="${path%%/*}"
+    local rest="${path#*/}"
+    local repo="${rest%%/*}"
+    local remainder="${rest#*/}"
 
-    # 4. 执行下载逻辑
-    echo "开始下载: $files_name -> $store_away"
-    (
-    if [[ "$mode" == "blob" ]]; then
-        mkdir -p "$(dirname "$store_away")"
-        curl -fsSL "$download_url" -o "$store_away" || { echo "Download failed"; return 1; }
+    local type branch="" subpath=""
+
+    if [[ $remainder =~ ^tree/([^/]+)(/(.*))?$ ]]; then
+        type="tree"
+        branch="${BASH_REMATCH[1]}"
+        subpath="${BASH_REMATCH[3]:-}"
+    elif [[ $remainder =~ ^blob/([^/]+)(/(.*))?$ ]]; then
+        type="blob"
+        branch="${BASH_REMATCH[1]}"
+        subpath="${BASH_REMATCH[3]:-}"
+        [[ -z $subpath ]] && { echo "错误链接,文件名为空"; return 1; }
+    elif [[ -z $remainder ]]; then
+        type="repo"
     else
-        # 处理 tree 或整个仓库
-        git clone -q --depth=1 --filter=blob:none --sparse ${branch:+-b $branch} "$base_url" "$tmpdir" || return 1
-        cd "$tmpdir" || return 1
-        
-        if [[ -n "$path_after_branch" ]]; then
-            git sparse-checkout set "$path_after_branch" || return 1
-        fi
-
-        # OpenWrt 特殊处理：替换 Makefile 引用
-        find . -maxdepth 4 -name "Makefile" -exec sed -i \
-            -e 's#include ../../luci.mk#include $(TOPDIR)/feeds/luci/luci.mk#g' \
-            -e 's#include ../../lang/#include $(TOPDIR)/feeds/packages/lang/#g' {} +
-
-        # 移动文件
-        local src_path="$tmpdir${path_after_branch:+/$path_after_branch}"
-        if [[ "$route" == "all" ]]; then
-            # 'all' 模式：合并到目标目录，冲突则覆盖
-            cp -rf "$src_path"/* "$store_away/" 2>/dev/null
-        else
-            # 普通模式：替换目标目录
-            rm -rf "$store_away"
-            mkdir -p "$(dirname "$store_away")"
-            cp -rf "$src_path" "$store_away"
-        fi
+        echo "无效的github链接"
+        return 1
     fi
 
-    echo "Done: $files_name 已就绪"
-    )
-}
+    [[ -z $repo ]] && { echo "错误链接,仓库名为空"; return 1; }
 
+    local base_url="https://github.com/$owner/$repo"
+
+    # 用于消息和默认路径的名称
+    local files_name
+    if [[ $type == "blob" ]]; then
+        files_name="$subpath"
+    elif [[ -n $subpath ]]; then
+        files_name="${subpath##*/}"
+    else
+        files_name="$repo"
+    fi
+
+    # 计算目标路径
+    local store_away
+    if [[ $route == "all" ]]; then
+        store_away="$HOME_PATH/"
+    elif [[ $route == openwrt/* ]]; then
+        store_away="$HOME_PATH/${route#openwrt/}"
+    elif [[ $route == ./* ]]; then
+        store_away="$HOME_PATH/${route#./}"
+    elif [[ -n $route ]]; then
+        store_away="$HOME_PATH/$route"
+    else
+        store_away="$HOME_PATH/$files_name"
+    fi
+
+    # 下载逻辑
+    if [[ $type == "blob" ]]; then
+        # 单文件下载（raw）
+        local download_url="https://raw.githubusercontent.com/$owner/$repo/$branch/$subpath"
+        local target_file="$store_away"
+        mkdir -p "$(dirname "$target_file")"
+        if curl -fsSL "$download_url" -o "$target_file"; then
+            echo "$files_name 文件下载成功"
+        else
+            echo "$files_name 文件下载失败"
+            return 1
+        fi
+    else
+        # 目录/仓库下载
+        local source_dir
+        local do_sed=false
+
+        if [[ -n $subpath ]]; then
+            # 子目录：使用 sparse-checkout
+            do_sed=true
+            git clone -q --no-checkout "$base_url" "$tmpdir" || \
+                { echo "$files_name 文件下载失败"; return 1; }
+            git -C "$tmpdir" sparse-checkout init --cone >/dev/null 2>&1
+            git -C "$tmpdir" sparse-checkout set "$subpath" >/dev/null 2>&1
+            git -C "$tmpdir" checkout "$branch" -q || \
+                { echo "$files_name 文件下载失败"; return 1; }
+            source_dir="$tmpdir/$subpath"
+        else
+            # 整个仓库
+            if [[ -n $branch ]]; then
+                git clone -q --single-branch --depth 1 --branch "$branch" "$base_url" "$tmpdir" || \
+                    { echo "$files_name 文件下载失败"; return 1; }
+            else
+                git clone -q --depth 1 "$base_url" "$tmpdir" || \
+                    { echo "$files_name 文件下载失败"; return 1; }
+            fi
+            source_dir="$tmpdir"
+        fi
+
+        # 只在下载子目录时修复 LuCI/lang 路径（原脚本行为）
+        if $do_sed; then
+            grep -rl 'include ../../luci.mk' "$source_dir" 2>/dev/null | \
+                xargs -r sed -i 's|include ../../luci.mk|include \$(TOPDIR)/feeds/luci/luci.mk|g'
+            grep -rl 'include ../../lang/' "$source_dir" 2>/dev/null | \
+                xargs -r sed -i 's|include ../../lang/|include \$(TOPDIR)/feeds/packages/lang/|g'
+        fi
+
+        # 复制到目标位置
+        if [[ $route == "all" ]]; then
+            # 替换模式：删除已有文件后直接复制内容到根目录
+            find "$source_dir" -mindepth 1 -printf '%P\n' | while read -r item; do
+                rm -rf "$HOME_PATH/$item"
+            done
+            cp -a "$source_dir"/. "$HOME_PATH/" || \
+                { echo "$files_name 文件下载失败"; return 1; }
+        else
+            # 普通模式：删除目标后复制整个目录
+            rm -rf "$store_away"
+            mkdir -p "$(dirname "$store_away")"
+            cp -a "$source_dir" "$store_away" || \
+                { echo "$files_name 文件下载失败"; return 1; }
+        fi
+
+        echo "$files_name 文件下载完成"
+    fi
+}
 
 
 function Diy_menu() {
