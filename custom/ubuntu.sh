@@ -7,13 +7,13 @@ echo -e "\033[36m开始升级ubuntu插件和安装依赖.....\033[0m"
 
 echo "::group::使用apt安装必要软件包"
 # 更新ubuntu源
-apt update -y
+apt -qq update -y
 
 # 升级ubuntu
-apt full-upgrade -y
+apt -qq full-upgrade -y
 
 # 安装编译openwrt的依赖
-apt install -y ack antlr3 asciidoc autoconf automake autopoint binutils bison build-essential \
+apt -qq install -y ack antlr3 asciidoc autoconf automake autopoint binutils bison build-essential \
   bzip2 ccache clang cmake cpio curl device-tree-compiler ecj fastjar flex gawk gettext gcc-multilib \
   g++-multilib git gnutls-dev gperf haveged help2man intltool lib32gcc-s1 libc6-dev-i386 libelf-dev \
   libglib2.0-dev libgmp3-dev libltdl-dev libmpc-dev libmpfr-dev libncurses-dev libpython3-dev \
