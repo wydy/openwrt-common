@@ -44,7 +44,7 @@ OFFICIAL)
   variable GENE_PATH="${HOME_PATH}/package/base-files/files/bin/config_generate"
 ;;
 *)
-  TIME r "不支持${SOURCE_CODE}此源码，当前只支持IMMORTALWRT、OFFICIALT"
+  TIME r "不支持${SOURCE_CODE}此源码，当前只支持IMMORTALWRT、OFFICIAL"
   exit 1
 ;;
 esac
@@ -137,13 +137,13 @@ EXCLUDE_DIRS=(
 #    "${HOME_PATH}/feeds/danshui"
 )
 
-for package in "${PACKAGES_TO_REMOVE[@]}"; do
+if [[ ${#PACKAGES_TO_REMOVE[@]} -gt 0 ]]; then
     find "${HOME_PATH}/feeds" "${HOME_PATH}/package" \
-        -path "${EXCLUDE_DIRS[0]}" -prune -o \
-        -path "${EXCLUDE_DIRS[1]}" -prune -o \
-        -path "${EXCLUDE_DIRS[2]}" -prune -o \
-        -name "$package" -type d -exec rm -rf {} +
-done
+        ${EXCLUDE_DIRS[@]/#/ -path } ${EXCLUDE_DIRS[@]/%/ -prune -o} \
+        \( -name "${PACKAGES_TO_REMOVE[0]}" \
+        ${PACKAGES_TO_REMOVE[@]:1:+ -o -name "${PACKAGES_TO_REMOVE[@]:1}"} \) \
+        -type d -print0 | xargs -0 rm -rf
+fi
 
 # 更新golang
 gitsvn https://github.com/sbwml/packages_lang_golang/tree/25.x ${HOME_PATH}/feeds/packages/lang/golang
