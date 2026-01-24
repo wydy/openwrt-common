@@ -715,130 +715,85 @@ echo "FIRMWARE_DATE=$(date +%Y-%m%d-%H%M)" >> ${GITHUB_ENV}
 }
 
 
-function gitsvn() {
+gitsvn() {
     local url="${1%.git}"
     local route="$2"
+    local home_dir="${HOME_PATH}"
     
-    # 检查必要变量
-    if [[ -z "$HOME_PATH" ]]; then
-        echo "错误: HOME_PATH 环境变量未定义"
+    # 1. 变量初始化
+    local tmpdir; tmpdir=$(mktemp -d)
+    local base_url repo_name branch path_after_branch files_name store_away mode
+    
+    # 确保无论脚本如何退出，都会删除临时文件夹
+    trap 'rm -rf "$tmpdir"' RETURN EXIT
+
+    # 2. 解析 GitHub 链接 (使用 Bash 内置正则和修剪，减少 fork)
+    if [[ "$url" =~ github\.com/([^/]+)/([^/]+)/tree/([^/]+)/(.*) ]]; then
+        mode="tree"
+        repo_name="${BASH_REMATCH[2]}"
+        branch="${BASH_REMATCH[3]}"
+        path_after_branch="${BASH_REMATCH[4]}"
+        base_url="https://github.com/${BASH_REMATCH[1]}/${repo_name}"
+        files_name="${path_after_branch##*/}"
+    elif [[ "$url" =~ github\.com/([^/]+)/([^/]+)/blob/([^/]+)/(.*) ]]; then
+        mode="blob"
+        branch="${BASH_REMATCH[3]}"
+        path_after_branch="${BASH_REMATCH[4]}"
+        files_name="${path_after_branch##*/}"
+        local download_url="https://raw.githubusercontent.com/${BASH_REMATCH[1]}/${BASH_REMATCH[2]}/$branch/$path_after_branch"
+    elif [[ "$url" =~ github\.com/([^/]+)/([^/]+) ]]; then
+        mode="repo"
+        repo_name="${BASH_REMATCH[2]}"
+        base_url="https://github.com/${BASH_REMATCH[1]}/${repo_name}"
+        files_name="$repo_name"
+    else
+        echo "Error: 无效的 GitHub 链接"
         return 1
     fi
 
-    # 1. URL 解析 (区分 blob, tree, 或 仓库根目录)
-    local base_url branch target_path type repo_name
-    if [[ "$url" =~ ^https://github.com/([^/]+)/([^/]+)/(tree|blob)/([^/]+)(/(.*))?$ ]]; then
-        # 匹配模式: user/repo/tree/branch/path/to/file
-        base_url="https://github.com/${BASH_REMATCH[1]}/${BASH_REMATCH[2]}"
-        repo_name="${BASH_REMATCH[2]}"
-        type="${BASH_REMATCH[3]}"   # tree 或 blob
-        branch="${BASH_REMATCH[4]}"
-        target_path="${BASH_REMATCH[6]}"
-    elif [[ "$url" =~ ^https://github.com/([^/]+)/([^/]+)$ ]]; then
-        # 匹配模式: user/repo (根目录)
-        base_url="$url"
-        repo_name="${BASH_REMATCH[2]}"
-        type="root"
-        branch=""
-        target_path=""
+    # 3. 确定存储路径 (store_away)
+    case "$route" in
+        "all")      store_away="$home_dir" ;;
+        openwrt/*)  store_away="$home_dir/${route#openwrt/}" ;;
+        ./*)        store_away="$home_dir/${route#./}" ;;
+        "")         store_away="$home_dir/$files_name" ;;
+        *)          store_away="$home_dir/$route" ;;
+    esac
+
+    # 4. 执行下载逻辑
+    echo "Processing: $files_name -> $store_away"
+
+    if [[ "$mode" == "blob" ]]; then
+        mkdir -p "$(dirname "$store_away")"
+        curl -fsSL "$download_url" -o "$store_away" || { echo "Download failed"; return 1; }
     else
-        echo "无效或不支持的 GitHub 链接: $url"
-        return 1
-    fi
-
-    # 2. 计算最终存储路径 (store_away)
-    local store_away
-    if [[ "$route" == "all" ]]; then
-        store_away="$HOME_PATH"
-    elif [[ "$route" == *"openwrt"* ]]; then
-        store_away="$HOME_PATH/${route#*openwrt/}"
-    elif [[ "$route" == *"./"* ]]; then
-        store_away="$HOME_PATH/${route#*./}"
-    elif [[ -n "$route" ]]; then
-        store_away="$HOME_PATH/$route"
-    else
-        # 默认使用文件名或仓库名
-        if [[ -n "$target_path" ]]; then
-            store_away="$HOME_PATH/${target_path##*/}"
-        else
-            store_away="$HOME_PATH/$repo_name"
-        fi
-    fi
-
-    echo "正在处理: $repo_name ($type) -> $store_away"
-
-    # 3. 准备临时目录 (并在函数结束时自动清理)
-    local tmpdir
-    tmpdir="$(mktemp -d)" || { echo "创建临时目录失败"; return 1; }
-    trap 'rm -rf "$tmpdir"' RETURN
-
-    # 4. 下载逻辑
-    if [[ "$type" == "blob" ]]; then
-        # === 单文件下载 (curl) ===
-        local raw_url="${base_url/github.com/raw.githubusercontent.com}/$branch/$target_path"
-        # 确保父目录存在 (如果是指定路径下载)
-        if [[ "$route" != "all" && "$store_away" == */* ]]; then
-            mkdir -p "${store_away%/*}"
-        fi
-        if curl -fsSL "$raw_url" -o "$store_away"; then
-            echo "文件下载成功: ${target_path##*/}"
-            return 0
-        else
-            echo "文件下载失败"
-            return 1
-        fi
-    else
-        # === 仓库或文件夹下载 (git) ===
+        # 处理 tree 或整个仓库
+        git clone -q --depth=1 --filter=blob:none --sparse ${branch:+-b $branch} "$base_url" "$tmpdir" || return 1
+        cd "$tmpdir" || return 1
         
-        # 优化 clone 参数：只抓取最近一次提交，且不检出文件(稍后 sparse-checkout)
-        # 注意: --filter=blob:none 比 depth=1 更快，但为兼容旧 git 版本，保留 depth=1
-        if ! git clone -q --depth=1 --no-checkout --filter=blob:none "$base_url" "$tmpdir"; then
-            echo "Git clone 失败"
-            return 1
-        fi
-        pushd "$tmpdir" > /dev/null || return 1
-        # 如果指定了分支，切换分支 (如果是 root 类型，branch 为空，git 会使用默认分支)
-        if [[ -n "$branch" ]]; then
-             git fetch -q --depth=1 origin "$branch"
-             git checkout -q "$branch"
-        else
-             git checkout -q $(git rev-parse --abbrev-ref HEAD)
-        fi
-        # 稀疏检出 (如果只需要子目录)
-        if [[ -n "$target_path" ]]; then
-            git sparse-checkout init --cone > /dev/null 2>&1
-            git sparse-checkout set "$target_path" > /dev/null 2>&1
-        else
-            # 根目录模式：恢复所有文件
-            git checkout -q .
+        if [[ -n "$path_after_branch" ]]; then
+            git sparse-checkout set "$path_after_branch" || return 1
         fi
 
-        # === OpenWrt 特定的修改逻辑 (保留原函数意图) ===
-        # 仅在文件存在时执行，避免报错
-        if [[ -f "$target_path/Makefile" || -n $(find . -maxdepth 3 -name "luci.mk") ]]; then
-            grep -rl 'include ../../luci.mk' . | xargs -r sed -i 's#include ../../luci.mk#include \$(TOPDIR)/feeds/luci/luci.mk#g'
-            grep -rl 'include ../../lang/' . | xargs -r sed -i 's#include ../../lang/#include \$(TOPDIR)/feeds/packages/lang/#g'
-        fi
+        # OpenWrt 特殊处理：替换 Makefile 引用
+        find . -maxdepth 4 -name "Makefile" -exec sed -i \
+            -e 's#include ../../luci.mk#include $(TOPDIR)/feeds/luci/luci.mk#g' \
+            -e 's#include ../../lang/#include $(TOPDIR)/feeds/packages/lang/#g' {} +
 
-        # 准备移动的源路径
-        local source_path="$tmpdir"
-        [[ -n "$target_path" ]] && source_path="$tmpdir/$target_path"
-        # 5. 移动文件到最终位置
+        # 移动文件
+        local src_path="$tmpdir${path_after_branch:+/$path_after_branch}"
         if [[ "$route" == "all" ]]; then
-            # 模式: 也就是合并内容到 HOME_PATH，不删除 HOME_PATH 本身
-            echo "合并内容到 $store_away ..."
-            cp -rf "$source_path"/* "$store_away/" 2>/dev/null || true
-            # 注意：隐藏文件可能需要额外处理，这里 cp -r 通常包含隐藏文件（取决于 shell 设置）
+            # 'all' 模式：合并到目标目录，冲突则覆盖
+            cp -rf "$src_path"/* "$store_away/" 2>/dev/null
         else
-            # 模式: 替换目标目录
-            echo "替换目录 $store_away ..."
+            # 普通模式：替换目标目录
             rm -rf "$store_away"
             mkdir -p "$(dirname "$store_away")"
-            cp -rf "$source_path" "$store_away"
+            cp -rf "$src_path" "$store_away"
         fi
-        popd > /dev/null || return 1
-        echo "下载并处理完成。"
     fi
+
+    echo "Done: $files_name 已就绪"
 }
 
 
