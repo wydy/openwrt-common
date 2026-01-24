@@ -761,8 +761,8 @@ gitsvn() {
     esac
 
     # 4. 执行下载逻辑
-    echo "Processing: $files_name -> $store_away"
-
+    echo "开始下载: $files_name -> $store_away"
+    (
     if [[ "$mode" == "blob" ]]; then
         mkdir -p "$(dirname "$store_away")"
         curl -fsSL "$download_url" -o "$store_away" || { echo "Download failed"; return 1; }
@@ -794,6 +794,7 @@ gitsvn() {
     fi
 
     echo "Done: $files_name 已就绪"
+    )
 }
 
 
