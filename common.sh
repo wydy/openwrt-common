@@ -727,13 +727,13 @@ function gitsvn() {
 
     # 1. URL 解析 (区分 blob, tree, 或 仓库根目录)
     local base_url branch target_path type repo_name
-    if [[ "$url" =~ ^https://github.com/([^/]+)/([^/]+)/(tree|blob)/([^/]+)/(.*)$ ]]; then
+    if [[ "$url" =~ ^https://github.com/([^/]+)/([^/]+)/(tree|blob)/([^/]+)(/(.*))?$ ]]; then
         # 匹配模式: user/repo/tree/branch/path/to/file
         base_url="https://github.com/${BASH_REMATCH[1]}/${BASH_REMATCH[2]}"
         repo_name="${BASH_REMATCH[2]}"
         type="${BASH_REMATCH[3]}"   # tree 或 blob
         branch="${BASH_REMATCH[4]}"
-        target_path="${BASH_REMATCH[5]}"
+        target_path="${BASH_REMATCH[6]}"
     elif [[ "$url" =~ ^https://github.com/([^/]+)/([^/]+)$ ]]; then
         # 匹配模式: user/repo (根目录)
         base_url="$url"
