@@ -111,8 +111,6 @@ sed -i '1i\src-git passwall_packages https://github.com/Openwrt-Passwall/openwrt
 
 THEME_BRANCH="Theme2"
 
-echo "src-git danshui https://github.com/281677160/openwrt-package.git;$SOURCE" >> "${HOME_PATH}/feeds.conf.default"
-echo "src-git dstheme https://github.com/281677160/openwrt-package.git;$THEME_BRANCH" >> "${HOME_PATH}/feeds.conf.default"
 [[ "${OpenClash_branch}" == "1" ]] && echo "src-git OpenClash https://github.com/vernesong/OpenClash.git;master" >> "${HOME_PATH}/feeds.conf.default"
 [[ "${OpenClash_branch}" == "2" ]] && echo "src-git OpenClash https://github.com/vernesong/OpenClash.git;dev" >> "${HOME_PATH}/feeds.conf.default"
 
@@ -136,9 +134,7 @@ PACKAGES_TO_REMOVE=(
 )
 
 EXCLUDE_DIRS=(
-    "${HOME_PATH}/feeds/danshui"
-    "${HOME_PATH}/feeds/dstheme"
-    "${HOME_PATH}/feeds/OpenClash"
+#    "${HOME_PATH}/feeds/danshui"
 )
 
 for package in "${PACKAGES_TO_REMOVE[@]}"; do
@@ -148,23 +144,6 @@ for package in "${PACKAGES_TO_REMOVE[@]}"; do
         -path "${EXCLUDE_DIRS[2]}" -prune -o \
         -name "$package" -type d -exec rm -rf {} +
 done
-
-if [[ ! "${REPO_BRANCH}" =~ ^(main|master|(openwrt-)?(24\.10)|(openwrt-)?(25\.12))$ ]]; then
-  rm -rf ${HOME_PATH}/feeds/danshui/luci-app-fancontrol
-  rm -rf ${HOME_PATH}/feeds/danshui/luci-app-qmodem
-  rm -rf ${HOME_PATH}/feeds/danshui/relevance/quectel_cm-5G
-fi
-
-if [[ "${REPO_BRANCH}" =~ ^(2410|2512|(openwrt-)?(24\.10)|(openwrt-)?(25\.12))$ ]]; then
-  rm -rf ${HOME_PATH}/feeds/danshui/luci-app-quickstart
-  rm -rf ${HOME_PATH}/feeds/danshui/luci-app-linkease
-  rm -rf ${HOME_PATH}/feeds/danshui/luci-app-istorex
-fi
-
-if [[ ! -d "${HOME_PATH}/package/network/config/firewall4" ]]; then
-  rm -rf ${HOME_PATH}/feeds/danshui/luci-app-nikki
-  rm -rf ${HOME_PATH}/feeds/danshui/luci-app-homeproxy
-fi
 
 # 更新golang
 gitsvn https://github.com/sbwml/packages_lang_golang/tree/25.x ${HOME_PATH}/feeds/packages/lang/golang
@@ -215,14 +194,6 @@ fi
 
 function Diy_OFFICIAL() {
 cd ${HOME_PATH}
-if [[ "${REPO_BRANCH}" == "openwrt-19.07" ]]; then
-  gitsvn https://github.com/openwrt/openwrt/tree/openwrt-22.03/package/utils/bcm27xx-userland ${HOME_PATH}/package/utils/bcm27xx-userland
-  rm -fr ${HOME_PATH}/feeds/danshui/luci-app-kodexplorer
-fi
-if [[ "${REPO_BRANCH}" == *"23.05"* ]]; then
-  gitsvn https://github.com/coolsnowwolf/packages/tree/152022403f0ab2a85063ae1cd9687bd5240fe9b7/net/dnsproxy ${HOME_PATH}/feeds/packages/net/dnsproxy
-  gitsvn https://github.com/coolsnowwolf/lede/tree/326599e3d08d7fe1dc084e1c87581cdf5a8e41a6/package/libs/libjson-c ${HOME_PATH}/package/libs/libjson-c
-fi
 }
 
 
