@@ -223,7 +223,9 @@ if [[ ! "${Default_theme}" == "0" ]] && [[ -n "${Default_theme}" ]]; then
 fi
 
 # 更新和安装feeds
+echo "::group::正在安装feeds"
 ./scripts/feeds install -a
+echo "::endgroup::"
 
 # 使用自定义配置文件
 [[ -f "$MYCONFIG_FILE" ]] && cp -Rf $MYCONFIG_FILE .config
