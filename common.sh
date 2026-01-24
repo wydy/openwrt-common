@@ -757,7 +757,7 @@ gitsvn() {
         openwrt/*)  store_away="$home_dir/${route#openwrt/}" ;;
         ./*)        store_away="$home_dir/${route#./}" ;;
         "")         store_away="$home_dir/$files_name" ;;
-        *)          store_away="$home_dir/$route" ;;
+        *)          store_away="$route" ;;
     esac
 
     # 4. 执行下载逻辑
