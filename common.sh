@@ -146,7 +146,7 @@ if [[ ${#PACKAGES_TO_REMOVE[@]} -gt 0 ]]; then
 fi
 
 # 更新golang
-gitsvn https://github.com/openwrt/packages/tree/openwrt-25.12/lang/golang ${HOME_PATH}/feeds/packages/lang/golang
+gitsvn https://github.com/openwrt/packages/tree/master/lang/golang ${HOME_PATH}/feeds/packages/lang/golang
 
 # files大法，设置固件无烦恼
 if [ -d "${BUILD_PATCHES}" ]; then
